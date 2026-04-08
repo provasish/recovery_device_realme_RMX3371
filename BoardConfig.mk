@@ -15,13 +15,27 @@ AB_OTA_UPDATER := true
 AB_OTA_PARTITIONS += \
     boot \
     dtbo \
+    odm \
+    product \
     system \
     system_ext \
-    product \
-    odm \
-    vendor \
     vbmeta \
-    vbmeta_system
+    vbmeta_system \
+    vbmeta_vendor \
+    vendor \
+
+# AB partitions for oplus
+AB_OTA_PARTITIONS += \
+    my_bigball \
+    my_carrier \
+    my_company \
+    my_engineering \
+    my_heytap \
+    my_manifest \
+    my_preload \
+    my_product \
+    my_region \
+    my_stock
 
 BOARD_USES_RECOVERY_AS_BOOT := false
 
@@ -103,7 +117,12 @@ TARGET_USERIMAGES_USE_F2FS := true
 BOARD_SUPER_PARTITION_SIZE := 11274289152
 BOARD_SUPER_PARTITION_GROUPS := qti_dynamic_partitions
 BOARD_QTI_DYNAMIC_PARTITIONS_SIZE := 11270094848
-BOARD_QTI_DYNAMIC_PARTITIONS_PARTITION_LIST := odm product system system_ext vendor
+BOARD_QTI_DYNAMIC_PARTITIONS_PARTITION_LIST := \
+    system \
+    system_ext \
+    product \
+    vendor \
+    odm
 
 # OTA Assert
 TARGET_OTA_ASSERT_DEVICE := RMX3371,RE54E4L1,spartan
@@ -158,6 +177,12 @@ BOARD_AVB_VBMETA_SYSTEM_ALGORITHM := SHA256_RSA2048
 BOARD_AVB_VBMETA_SYSTEM_ROLLBACK_INDEX := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
 BOARD_AVB_VBMETA_SYSTEM_ROLLBACK_INDEX_LOCATION := 1
 
+BOARD_AVB_VBMETA_VENDOR := vendor odm
+BOARD_AVB_VBMETA_VENDOR_KEY_PATH := external/avb/test/data/testkey_rsa2048.pem
+BOARD_AVB_VBMETA_VENDOR_ALGORITHM := SHA256_RSA2048
+BOARD_AVB_VBMETA_VENDOR_ROLLBACK_INDEX := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
+BOARD_AVB_VBMETA_VENDOR_ROLLBACK_INDEX_LOCATION := 2
+
 #Encryption
 PLATFORM_VERSION := 99.87.36
 PLATFORM_VERSION_LAST_STABLE := $(PLATFORM_VERSION)
@@ -194,7 +219,7 @@ TW_NO_SCREEN_BLANK := true
 TW_EXCLUDE_APEX := true
 TW_NO_BIND_SYSTEM := true
 TW_NO_EXFAT_FUSE := true
-TW_FRAMERATE := 60
+TW_FRAMERATE := 120
 TW_SYSTEM_BUILD_PROP_ADDITIONAL_PATHS := build.prop
 TW_OVERRIDE_SYSTEM_PROPS := "ro.build.fingerprint=ro.system.build.fingerprint"
 TW_RECOVERY_ADDITIONAL_RELINK_BINARY_FILES += \
@@ -218,4 +243,4 @@ TW_RECOVERY_ADDITIONAL_RELINK_FILES += $(TARGET_OUT_EXECUTABLES)/debuggerd
 BOARD_RAMDISK_USE_LZMA := true
 
 # TWRP Version
-TW_DEVICE_VERSION := YOGRaJ
+TW_DEVICE_VERSION := provasish
