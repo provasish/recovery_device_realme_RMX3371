@@ -244,3 +244,13 @@ BOARD_RAMDISK_USE_LZMA := true
 
 # TWRP Version
 TW_DEVICE_VERSION := provasish
+TW_STATUS_ICONS_ALIGN := center
+TW_INCLUDE_LOGICAL := \
+my_bigball \
+my_carrier \
+my_engineering \
+my_heytap \
+my_manifest \
+my_product \
+my_region \
+my_stock
