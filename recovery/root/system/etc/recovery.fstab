@@ -82,7 +82,4 @@ my_manifest        /my_manifest    erofs      ro            wait,slotselect,logi
 /dev/block/bootdevice/by-name/modemdump      /mnt/vendor/modemdump             ext4   nosuid,nodev,noatime,barrier=1,discard                            wait,check
 #endif
 #ifdef OPLUS_FEATURE_STORAGE
-#Runsheng.Pei@ANDROID.STORAGE.0, 2017/12/29, Add for new reserve partition
-/dev/block/by-name/oplusreserve2      /oplusreserve             ext4   nosuid,nodev,noatime,barrier=1                           wait,check,first_stage_mount,nofail
-/dev/block/by-name/oplusreserve2      /op2                       ext4   nosuid,nodev,noatime,barrier=1                           wait,check,first_stage_mount,nofail
 #endif
