@@ -22,26 +22,14 @@
     },
 
     {
-      "Name": "DisplayCapacityCPUs",
-      "Controller": "cpuset",
-      "File": "display/cpus"
-    },
-    {
-      "Name": "MemStats",
-      "Controller": "memory",
-      "File": "memory.stat"
-    },
-    {
       "Name": "MemLimit",
       "Controller": "memory",
-      "File": "memory.limit_in_bytes",
-      "FileV2": "memory.max"
+      "File": "memory.limit_in_bytes"
     },
     {
       "Name": "MemSoftLimit",
       "Controller": "memory",
-      "File": "memory.soft_limit_in_bytes",
-      "FileV2": "memory.low"
+      "File": "memory.soft_limit_in_bytes"
     },
     {
       "Name": "MemSwappiness",
@@ -49,24 +37,14 @@
       "File": "memory.swappiness"
     },
     {
-      "Name": "MemUsage",
-      "Controller": "memory",
-      "File": "memory.usage_in_bytes"
+      "Name": "STuneBoost",
+      "Controller": "schedtune",
+      "File": "schedtune.boost"
     },
     {
-      "Name": "MemAndSwapUsage",
-      "Controller": "memory",
-      "File": "memory.memsw.usage_in_bytes"
-    },
-    {
-      "Name": "MemPressureLevel",
-      "Controller": "memory",
-      "File": "memory.pressure_level"
-    },
-    {
-      "Name": "MemCgroupEventControl",
-      "Controller": "memory",
-      "File": "cgroup.event_control"
+      "Name": "STunePreferIdle",
+      "Controller": "schedtune",
+      "File": "schedtune.prefer_idle"
     },
     {
       "Name": "UClampMin",
@@ -79,32 +57,9 @@
       "File": "cpu.uclamp.max"
     },
     {
-      "Name": "UClampLatencySensitive",
-      "Controller": "cpu",
-      "File": "cpu.uclamp.latency_sensitive"
-    },
-    {
       "Name": "FreezerState",
       "Controller": "freezer",
-      "File": "cgroup.freeze"
-    },
-    {
-      "Name": "BfqWeight",
-      "Controller": "io",
-      "File": "blkio.bfq.weight",
-      "FileV2": "io.bfq.weight"
-    },
-    {
-      "Name": "CfqGroupIdle",
-      "Controller": "io",
-      "File": "blkio.group_idle",
-      "FileV2": "io.group_idle"
-    },
-    {
-      "Name": "CfqWeight",
-      "Controller": "io",
-      "File": "blkio.weight",
-      "FileV2": "io.weight"
+      "File": "frozen/freezer.state"
     }
   ],
 
@@ -116,7 +71,7 @@
           "Name": "JoinCgroup",
           "Params":
           {
-            "Controller": "cpu",
+            "Controller": "schedtune",
             "Path": "background"
           }
         }
@@ -126,11 +81,11 @@
       "Name": "Frozen",
       "Actions": [
         {
-          "Name": "SetAttribute",
+          "Name": "JoinCgroup",
           "Params":
           {
-            "Name": "FreezerState",
-            "Value": "1"
+            "Controller": "freezer",
+            "Path": "frozen"
           }
         }
       ]
@@ -139,11 +94,11 @@
       "Name": "Unfrozen",
       "Actions": [
         {
-          "Name": "SetAttribute",
+          "Name": "JoinCgroup",
           "Params":
           {
-            "Name": "FreezerState",
-            "Value": "0"
+            "Controller": "freezer",
+            "Path": ""
           }
         }
       ]
@@ -155,21 +110,8 @@
           "Name": "JoinCgroup",
           "Params":
           {
-            "Controller": "cpu",
-            "Path": "system"
-          }
-        }
-      ]
-    },
-    {
-      "Name": "ServicePerformance",
-      "Actions": [
-        {
-          "Name": "JoinCgroup",
-          "Params":
-          {
-            "Controller": "cpu",
-            "Path": "system-background"
+            "Controller": "schedtune",
+            "Path": ""
           }
         }
       ]
@@ -181,7 +123,7 @@
           "Name": "JoinCgroup",
           "Params":
           {
-            "Controller": "cpu",
+            "Controller": "schedtune",
             "Path": "foreground"
           }
         }
@@ -194,7 +136,7 @@
           "Name": "JoinCgroup",
           "Params":
           {
-            "Controller": "cpu",
+            "Controller": "schedtune",
             "Path": "top-app"
           }
         }
@@ -207,7 +149,7 @@
           "Name": "JoinCgroup",
           "Params":
           {
-            "Controller": "cpu",
+            "Controller": "schedtune",
             "Path": "rt"
           }
         }
@@ -220,13 +162,12 @@
           "Name": "JoinCgroup",
           "Params":
           {
-            "Controller": "cpu",
+            "Controller": "schedtune",
             "Path": "camera-daemon"
           }
         }
       ]
     },
-
     {
       "Name": "AudioAppPerformance",
       "Actions" : [
@@ -240,32 +181,7 @@
         }
       ]
     },
-    {
-      "Name": "NNApiHALPerformance",
-      "Actions": [
-        {
-          "Name": "JoinCgroup",
-          "Params":
-          {
-            "Controller": "cpu",
-            "Path": "nnapi-hal"
-          }
-        }
-      ]
-    },
-    {
-      "Name": "Dex2oatPerformance",
-      "Actions": [
-        {
-          "Name": "JoinCgroup",
-          "Params":
-          {
-            "Controller": "cpu",
-            "Path": "dex2oat"
-          }
-        }
-      ]
-    },
+
     {
       "Name": "CpuPolicySpread",
       "Actions": [
@@ -273,7 +189,7 @@
           "Name": "SetAttribute",
           "Params":
           {
-            "Name": "UClampLatencySensitive",
+            "Name": "STunePreferIdle",
             "Value": "1"
           }
         }
@@ -286,7 +202,7 @@
           "Name": "SetAttribute",
           "Params":
           {
-            "Name": "UClampLatencySensitive",
+            "Name": "STunePreferIdle",
             "Value": "0"
           }
         }
@@ -439,33 +355,6 @@
     },
 
     {
-      "Name": "CpuSetHBackground",
-      "Actions": [
-        {
-          "Name": "JoinCgroup",
-          "Params":
-            {
-              "Controller": "cpuset",
-              "Path": "h-background"
-            }
-        }
-      ]
-    },
-    {
-      "Name": "CpuSetLBackground",
-      "Actions": [
-        {
-          "Name": "JoinCgroup",
-          "Params":
-            {
-              "Controller": "cpuset",
-              "Path": "l-background"
-            }
-        }
-      ]
-    },
-
-    {
       "Name": "ServiceCapacityLow",
       "Actions": [
         {
@@ -518,82 +407,6 @@
         }
       ]
     },
-    {
-      "Name": "DisplayCapacity",
-      "Actions" : [
-        {
-          "Name" : "JoinCgroup",
-          "Params" :
-          {
-            "Controller": "cpuset",
-            "Path": "display"
-          }
-        }
-      ]
-    },
-
-    {
-      "Name": "BlkIoLBackground",
-      "Actions": [
-        {
-          "Name": "JoinCgroup",
-          "Params":
-          {
-            "Controller": "blkio",
-            "Path": "l-background"
-          }
-        },
-        {
-          "Name": "SetAttribute",
-          "Params":
-          {
-            "Name": "CfqGroupIdle",
-            "Value": "0",
-            "Optional": "true"
-          }
-        },
-        {
-          "Name": "SetAttribute",
-          "Params":
-          {
-            "Name": "CfqWeight",
-            "Value": "800",
-            "Optional": "true"
-          }
-        }
-      ]
-    },
-    {
-      "Name": "BlkIoHBackground",
-      "Actions": [
-        {
-          "Name": "JoinCgroup",
-          "Params":
-          {
-            "Controller": "blkio",
-            "Path": "h-background"
-          }
-        },
-        {
-          "Name": "SetAttribute",
-          "Params":
-          {
-            "Name": "CfqGroupIdle",
-            "Value": "0",
-            "Optional": "true"
-          }
-        },
-        {
-          "Name": "SetAttribute",
-          "Params":
-          {
-            "Name": "CfqWeight",
-            "Value": "1000",
-            "Optional": "true"
-          }
-        }
-      ]
-    },
 
     {
       "Name": "BlkIOForeground",
@@ -618,33 +431,6 @@
             "Controller": "blkio",
             "Path": "bg"
           }
-        },
-        {
-          "Name": "SetAttribute",
-          "Params":
-          {
-            "Name": "BfqWeight",
-            "Value": "10",
-            "Optional": "true"
-          }
-        },
-        {
-          "Name": "SetAttribute",
-          "Params":
-          {
-            "Name": "CfqGroupIdle",
-            "Value": "0",
-            "Optional": "true"
-          }
-        },
-        {
-          "Name": "SetAttribute",
-          "Params":
-          {
-            "Name": "CfqWeight",
-            "Value": "200",
-            "Optional": "true"
-          }
         }
       ]
     },
@@ -659,33 +445,6 @@
             "Controller": "blkio",
             "Path": "background"
           }
-        },
-        {
-          "Name": "SetAttribute",
-          "Params":
-          {
-            "Name": "BfqWeight",
-            "Value": "10",
-            "Optional": "true"
-          }
-        },
-        {
-          "Name": "SetAttribute",
-          "Params":
-          {
-            "Name": "CfqGroupIdle",
-            "Value": "0",
-            "Optional": "true"
-          }
-        },
-        {
-          "Name": "SetAttribute",
-          "Params":
-          {
-            "Name": "CfqWeight",
-            "Value": "200",
-            "Optional": "true"
-          }
         }
       ]
     },
@@ -698,33 +457,6 @@
           {
             "Controller": "blkio",
             "Path": ""
-          }
-        },
-        {
-          "Name": "SetAttribute",
-          "Params":
-          {
-            "Name": "BfqWeight",
-            "Value": "100",
-            "Optional": "true"
-          }
-        },
-        {
-          "Name": "SetAttribute",
-          "Params":
-          {
-            "Name": "CfqGroupIdle",
-            "Value": "0",
-            "Optional": "true"
-          }
-        },
-        {
-          "Name": "SetAttribute",
-          "Params":
-          {
-            "Name": "CfqWeight",
-            "Value": "1000",
-            "Optional": "true"
           }
         }
       ]
@@ -739,33 +471,6 @@
             "Controller": "blkio",
             "Path": ""
           }
-        },
-        {
-          "Name": "SetAttribute",
-          "Params":
-          {
-            "Name": "BfqWeight",
-            "Value": "100",
-            "Optional": "true"
-          }
-        },
-        {
-          "Name": "SetAttribute",
-          "Params":
-          {
-            "Name": "CfqGroupIdle",
-            "Value": "0",
-            "Optional": "true"
-          }
-        },
-        {
-          "Name": "SetAttribute",
-          "Params":
-          {
-            "Name": "CfqWeight",
-            "Value": "1000",
-            "Optional": "true"
-          }
         }
       ]
     },
@@ -779,33 +484,6 @@
             "Controller": "blkio",
             "Path": ""
           }
-        },
-        {
-          "Name": "SetAttribute",
-          "Params":
-          {
-            "Name": "BfqWeight",
-            "Value": "100",
-            "Optional": "true"
-          }
-        },
-        {
-          "Name": "SetAttribute",
-          "Params":
-          {
-            "Name": "CfqGroupIdle",
-            "Value": "0",
-            "Optional": "true"
-          }
-        },
-        {
-          "Name": "SetAttribute",
-          "Params":
-          {
-            "Name": "CfqWeight",
-            "Value": "1000",
-            "Optional": "true"
-          }
         }
       ]
     },
@@ -817,7 +495,7 @@
           "Name": "SetTimerSlack",
           "Params":
           {
-            "Slack": "5000000"
+            "Slack": "40000000"
           }
         }
       ]
@@ -830,33 +508,6 @@
           "Params":
           {
             "Slack": "50000"
-          }
-        }
-      ]
-    },
-
-    {
-      "Name": "SFMainPolicy",
-      "Actions": [
-        {
-          "Name": "JoinCgroup",
-          "Params":
-          {
-            "Controller": "cpuset",
-            "Path": "sf"
-          }
-        }
-      ]
-    },
-    {
-      "Name": "SFRenderEnginePolicy",
-      "Actions": [
-        {
-          "Name": "JoinCgroup",
-          "Params":
-          {
-            "Controller": "cpuset",
-            "Path": "sf"
           }
         }
       ]
@@ -944,6 +595,32 @@
           }
         }
       ]
+    },
+    {
+      "Name": "FreezerThawed",
+      "Actions": [
+        {
+          "Name": "SetAttribute",
+          "Params":
+          {
+            "Name": "FreezerState",
+            "Value": "THAWED"
+          }
+        }
+      ]
+    },
+    {
+      "Name": "FreezerFrozen",
+      "Actions": [
+        {
+          "Name": "SetAttribute",
+          "Params":
+          {
+            "Name": "FreezerState",
+            "Value": "FROZEN"
+          }
+        }
+      ]
     }
   ],
 
@@ -965,16 +642,8 @@
       "Profiles": [ "MaxPerformance", "MaxIoPriority", "TimerSlackNormal" ]
     },
     {
-      "Name": "SCHED_SP_SYSTEM",
-      "Profiles": [ "ServicePerformance", "LowIoPriority", "TimerSlackNormal" ]
-    },
-    {
       "Name": "SCHED_SP_RT_APP",
       "Profiles": [ "RealtimePerformance", "MaxIoPriority", "TimerSlackNormal" ]
-    },
-    {
-      "Name": "SCHED_SP_DISPLAY",
-      "Profiles": [ "HighPerformance", "HighIoPriority", "TimerSlackNormal" ]
     },
     {
       "Name": "CPUSET_SP_DEFAULT",
@@ -997,32 +666,8 @@
       "Profiles": [ "ServiceCapacityLow", "TimerSlackNormal" ]
     },
     {
-      "Name": "CPUSET_SP_DISPLAY",
-      "Profiles": [ "HighEnergySaving", "ProcessCapacityLow", "LowIoPriority", "TimerSlackHigh" ]
-    },
-    {
       "Name": "CPUSET_SP_RESTRICTED",
       "Profiles": [ "ServiceCapacityRestricted", "TimerSlackNormal" ]
-    },
-    {
-      "Name": "Dex2OatBootComplete",
-      "Profiles": [ "Dex2oatPerformance", "LowIoPriority", "TimerSlackHigh" ]
-    },
-    {
-      "Name": "Dex2OatBackground",
-      "Profiles": [ "HighEnergySaving", "ProcessCapacityLow", "LowIoPriority", "TimerSlackHigh" ]
-    },
-    {
-      "Name": "OtaProfiles",
-      "Profiles": [ "ServiceCapacityLow", "LowIoPriority", "HighEnergySaving" ]
-    },
-    {
-      "Name": "CPUSET_SP_LBACKGROUND",
-      "Profiles": [ "CpuSetLBackground", "BlkIoLBackground"]
-    },
-    {
-      "Name": "CPUSET_SP_HBACKGROUND",
-      "Profiles": [ "CpuSetHBackground", "BlkIoHBackground"]
     }
   ]
 }
