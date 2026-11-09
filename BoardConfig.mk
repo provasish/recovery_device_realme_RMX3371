@@ -183,8 +183,13 @@ TW_HAS_EDL_MODE := true
 TW_INCLUDE_RESETPROP := true
 TW_INCLUDE_REPACKTOOLS := true
 TW_INCLUDE_NTFS_3G := true
+# lpdump/lptools to inspect Super (lpdump also brings bootctl for slot checks)
+TW_INCLUDE_LPDUMP := true
+TW_INCLUDE_LPTOOLS := true
 TW_INPUT_BLACKLIST := "hbtp_vm"
-TW_NO_SCREEN_BLANK := true
+# Let the AMOLED panel turn off on the TWRP screen timeout. If it doesn't
+# wake up again with the power button on this panel, restore:
+# TW_NO_SCREEN_BLANK := true
 TW_EXCLUDE_APEX := true
 TW_NO_BIND_SYSTEM := true
 TW_NO_EXFAT_FUSE := true

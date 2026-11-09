@@ -68,17 +68,10 @@ on property:sys.usb.config=none && property:sys.usb.configfs=1
 on property:init.svc.adbd=stopped
     setprop sys.usb.ffs.ready 0
 
-on property:sys.usb.config=adb && property:sys.usb.configfs=1
-    start adbd
-
+# Plain adb (start adbd, bind ffs.adb) is handled by TWRP's own init.rc;
+# repeating it here only failed with "File exists" / "Device or resource busy".
 on property:sys.usb.config=mtp,adb && property:sys.usb.configfs=1
     start adbd
-
-on property:sys.usb.ffs.ready=1 && property:sys.usb.config=adb && property:sys.usb.configfs=1
-    write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "adb"
-    symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1
-    write /config/usb_gadget/g1/UDC ${sys.usb.controller}
-    setprop sys.usb.state ${sys.usb.config}
 
 on property:sys.usb.config=mtp && property:sys.usb.configfs=1
     write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "mtp"
