@@ -172,8 +172,11 @@ TW_THEME := portrait_hdpi
 TW_BRIGHTNESS_PATH := "/sys/class/backlight/panel0-backlight/brightness"
 TW_MAX_BRIGHTNESS := 2047
 TW_DEFAULT_BRIGHTNESS := 1024
-TW_Y_OFFSET := 104
-TW_H_OFFSET := -104
+# Use the full screen; the left punch-hole camera (cutout x 0-150, y 0-108)
+# only meets the status bar, so move the CPU temp to its right and centre the
+# status text vertically instead of pushing the whole UI below a gray strip.
+TW_STATUS_ICONS_ALIGN := center
+TW_CUSTOM_CPU_POS := 170
 TW_EXCLUDE_DEFAULT_USB_INIT := true
 TW_EXCLUDE_ENCRYPTED_BACKUPS := false
 TW_EXCLUDE_TWRPAPP := true
