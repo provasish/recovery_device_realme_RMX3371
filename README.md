@@ -38,9 +38,17 @@ and this local manifest, e.g. `.repo/local_manifests/rmx3371.xml`:
 
   <!-- TWRP recovery source with high-speed flash -->
   <remove-project name="android_bootable_recovery" />
-  <project name="provasish/android_bootable_recovery" path="bootable/recovery" remote="gh" revision="high-speed-flash" />
+  <project name="provasish/android_bootable_recovery" path="bootable/recovery" remote="gh" revision="android-12.1" />
 </manifest>
 ```
+
+| Repository | Branch | Contents |
+| ---------- | ------ | -------- |
+| [provasish/recovery_device_realme_RMX3371](https://github.com/provasish/recovery_device_realme_RMX3371) | `3.7.0_12` | this device tree |
+| [provasish/android_bootable_recovery](https://github.com/provasish/android_bootable_recovery) | `android-12.1` | TeamWin `android-12.1` plus high-speed flash and an honest slot-switch result |
+
+The tree also builds against stock TeamWin `bootable/recovery` (drop the two
+recovery lines); you just don't get high-speed flash, and otaripper goes unused.
 
 `device/qcom/twrp-common`, `hardware/qcom/bootctrl` and `device/qcom/common` come
 from the minimal manifest.
@@ -86,6 +94,9 @@ RMX3371_14.0.0.2100 installs in about 70 s instead of about 320 s.
 Full OTA zips only. If high-speed flash can't take a zip and nothing has been
 written yet, the install continues the normal way. To rebuild otaripper from
 source run `tools/build_otaripper.sh` on an x86_64 Linux host.
+
+Tested on device (RMX3371): stock realme UI 14.0.0.2100 with and without
+firmware (73 s, all 22 firmware images verified), and an AOSP ROM (52 s).
 
 ---
 ## Copyright notice
