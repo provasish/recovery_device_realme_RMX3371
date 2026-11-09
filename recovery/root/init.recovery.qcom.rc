@@ -53,16 +53,17 @@ on fs
     wait /dev/block/platform/soc/${ro.boot.bootdevice}
     symlink /dev/block/platform/soc/${ro.boot.bootdevice} /dev/block/bootdevice
 
+    # Stock realme OTA payloads write a few partitions that exist only once on
+    # this device. update_engine looks for <name>_<slot> next to misc, which
+    # recovery.fstab puts in /dev/block/by-name, so the slot aliases go there.
+    # Never put them in /dev/block/bootdevice/by-name: the QTI boot HAL scans
+    # every *_a entry in that folder, fails on aliases, and then can't set the
+    # active slot (update_engine ErrorCode::kPostinstallRunnerError).
     # This must be under on fs, otherwise update_engine wont map the partitions and exit installation
-    symlink /dev/block/bootdevice/by-name/mdm_oem_stanvbk /dev/block/bootdevice/by-name/mdm_oem_stanvbk_a
-    symlink /dev/block/bootdevice/by-name/mdm_oem_stanvbk /dev/block/bootdevice/by-name/mdm_oem_stanvbk_b
-    symlink /dev/block/bootdevice/by-name/mdm_oem_dycnvbk /dev/block/bootdevice/by-name/mdm_oem_dycnvbk_a
-    symlink /dev/block/bootdevice/by-name/mdm_oem_dycnvbk /dev/block/bootdevice/by-name/mdm_oem_dycnvbk_b
-    symlink /dev/block/bootdevice/by-name/spunvm /dev/block/bootdevice/by-name/spunvm_a
-    symlink /dev/block/bootdevice/by-name/spunvm /dev/block/bootdevice/by-name/spunvm_b
-    # Stock realme OTA payloads also carry oplusstanvbk, which exists only once
-    symlink /dev/block/bootdevice/by-name/oplusstanvbk /dev/block/bootdevice/by-name/oplusstanvbk_a
-    symlink /dev/block/bootdevice/by-name/oplusstanvbk /dev/block/bootdevice/by-name/oplusstanvbk_b
+    symlink /dev/block/by-name/spunvm /dev/block/by-name/spunvm_a
+    symlink /dev/block/by-name/spunvm /dev/block/by-name/spunvm_b
+    symlink /dev/block/by-name/oplusstanvbk /dev/block/by-name/oplusstanvbk_a
+    symlink /dev/block/by-name/oplusstanvbk /dev/block/by-name/oplusstanvbk_b
 
     # Set fscklog permission
     chown root system /dev/fscklogs/log
