@@ -26,12 +26,6 @@
 #
 
 import /init.recovery.qcom_decrypt.rc
-	
-service hal_cryptoeng_oplus /system/bin/hw/vendor.oplus.hardware.cryptoeng@1.0-service
-    class late_start
-    user system
-    group system input sdcard_rw sdcard_r
-    seclabel u:r:recovery:s0
 
 service make-fake-partitions-service /system/bin/make-fake-partitions-service.sh reserve
     user root

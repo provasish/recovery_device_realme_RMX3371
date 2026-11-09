@@ -15,6 +15,23 @@
 ## Device picture
 ![Realme GT Neo 3T](https://fdn2.gsmarena.com/vv/pics/realme/neo-3t-1.jpg "Realme GT Neo 3T")
 
+## Building
+
+Use the TWRP `twrp-12.1` minimal manifest, then make sure these are in your local manifest:
+
+| Path | Why |
+| ---- | --- |
+| `device/realme/RMX3371` | this tree |
+| `device/qcom/twrp-common` | `qcom_decrypt` / `qcom_decrypt_fbe` and `init.recovery.qcom_decrypt.rc` |
+| `hardware/qcom/bootctrl` | imported by `Android.bp` for `bootctrl.kona` |
+| `device/qcom/common` (`gpt-utils`) | imported by `Android.bp` for `libgptutils` |
+
+```bash
+. build/envsetup.sh
+lunch twrp_RMX3371-eng
+mka recoveryimage
+```
+
 ---
 ## Copyright notice
  ```
