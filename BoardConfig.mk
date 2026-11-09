@@ -172,11 +172,13 @@ TW_THEME := portrait_hdpi
 TW_BRIGHTNESS_PATH := "/sys/class/backlight/panel0-backlight/brightness"
 TW_MAX_BRIGHTNESS := 2047
 TW_DEFAULT_BRIGHTNESS := 1024
-# Use the full screen; the left punch-hole camera (cutout x 0-150, y 0-108)
-# only meets the status bar, so move the CPU temp to its right and centre the
-# status text vertically instead of pushing the whole UI below a gray strip.
+# Status bar: use the full screen (no gray band) and keep the CPU temperature
+# clear of the top-left punch hole. Stock cutout: x 0-150, y 0-108 px
+# (config_mainBuiltInDisplayCutout); the header logo starts at y 135, below it.
 TW_STATUS_ICONS_ALIGN := center
-TW_CUSTOM_CPU_POS := 170
+TW_CUSTOM_CPU_POS := 180
+# thermal_zone5 = cpuss-0-usr (CPU subsystem); thermal_zone0 (TWRP's default) is aoss0
+TW_CUSTOM_CPU_TEMP_PATH := /sys/class/thermal/thermal_zone5/temp
 TW_EXCLUDE_DEFAULT_USB_INIT := true
 TW_EXCLUDE_ENCRYPTED_BACKUPS := false
 TW_EXCLUDE_TWRPAPP := true

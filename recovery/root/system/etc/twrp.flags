@@ -10,6 +10,8 @@
 /dsp				emmc		/dev/block/bootdevice/by-name/dsp					flags=slotselect;backup=1;subpartitionof=/modem
 /dtbo				emmc		/dev/block/bootdevice/by-name/dtbo					flags=slotselect;display="DTBO";backup=1;flashimg=1
 /vbmeta				emmc		/dev/block/bootdevice/by-name/vbmeta				flags=slotselect;display="VBMeta";backup=1;flashimg=1
+/vbmeta_system		emmc		/dev/block/bootdevice/by-name/vbmeta_system			flags=slotselect;display="VBMeta System";backup=1;flashimg=1
+/vbmeta_vendor		emmc		/dev/block/bootdevice/by-name/vbmeta_vendor			flags=slotselect;display="VBMeta Vendor";backup=1;flashimg=1
 /efs1            	emmc       	/dev/block/bootdevice/by-name/modemst1              flags=backup=1;display=EFS
 /efs2            	emmc       	/dev/block/bootdevice/by-name/modemst2              flags=backup=1;subpartitionof=/efs1
 /efsc				emmc		/dev/block/bootdevice/by-name/fsc					flags=backup=1;subpartitionof=/efs1
