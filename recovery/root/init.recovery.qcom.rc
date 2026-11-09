@@ -60,6 +60,9 @@ on fs
     symlink /dev/block/bootdevice/by-name/mdm_oem_dycnvbk /dev/block/bootdevice/by-name/mdm_oem_dycnvbk_b
     symlink /dev/block/bootdevice/by-name/spunvm /dev/block/bootdevice/by-name/spunvm_a
     symlink /dev/block/bootdevice/by-name/spunvm /dev/block/bootdevice/by-name/spunvm_b
+    # Stock realme OTA payloads also carry oplusstanvbk, which exists only once
+    symlink /dev/block/bootdevice/by-name/oplusstanvbk /dev/block/bootdevice/by-name/oplusstanvbk_a
+    symlink /dev/block/bootdevice/by-name/oplusstanvbk /dev/block/bootdevice/by-name/oplusstanvbk_b
 
     # Set fscklog permission
     chown root system /dev/fscklogs/log
