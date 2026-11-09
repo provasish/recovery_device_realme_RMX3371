@@ -187,9 +187,11 @@ TW_INCLUDE_NTFS_3G := true
 TW_INCLUDE_LPDUMP := true
 TW_INCLUDE_LPTOOLS := true
 TW_INPUT_BLACKLIST := "hbtp_vm"
-# Let the AMOLED panel turn off on the TWRP screen timeout. If it doesn't
-# wake up again with the power button on this panel, restore:
-# TW_NO_SCREEN_BLANK := true
+# Keep the panel powered on screen timeout. TWRP still dims and then sets
+# the brightness to 0 (pixels off on this AMOLED, no burn-in); this only skips
+# gr_fb_blank(), which also suspends the touch controller -- after waking with
+# the power button the display came back but touch did not.
+TW_NO_SCREEN_BLANK := true
 TW_EXCLUDE_APEX := true
 TW_NO_BIND_SYSTEM := true
 TW_NO_EXFAT_FUSE := true
