@@ -98,6 +98,17 @@ source run `tools/build_otaripper.sh` on an x86_64 Linux host.
 Tested on device (RMX3371): stock realme UI 14.0.0.2100 with and without
 firmware (73 s, all 22 firmware images verified), and an AOSP ROM (52 s).
 
+## Kernel patch: f2fs inode size
+
+`prebuilt/Image` is the stock realme UI 14 kernel with one instruction changed
+by `tools/patch_f2fs_extra_isize.py`. On /data (larger than 32 GiB) the stock
+kernel gives new f2fs inodes a 48-byte extra attribute area, which AOSP kernels
+reject with "Structure needs cleaning", so anything TWRP wrote was unreadable
+on AOSP ROMs. The patched kernel creates 36-byte inodes like the AOSP kernels
+do, and still reads the 48-byte ones stock realme UI creates. If you replace
+the kernel, run the script on the new `Image`; it refuses to touch a kernel
+it doesn't recognize.
+
 ---
 ## Copyright notice
  ```

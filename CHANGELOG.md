@@ -6,6 +6,8 @@ TWRP for the realme GT Neo 3T (RMX3371).
 - No more gray band at the top: the UI uses the full screen and the CPU temperature moved clear of the punch-hole camera
 - CPU temperature now reads the CPU sensor (cpuss-0) instead of aoss0
 - VBMeta System and VBMeta Vendor can be flashed and backed up (Install → Image, Backup)
+- Files and folders TWRP writes to internal storage (backups, adb push, MTP) are now readable on AOSP ROMs.
+  Before, Android showed "Structure needs cleaning" for them, and a folder containing one listed as empty
 
 ## 3.7.1_12-provasish-20261109
 
