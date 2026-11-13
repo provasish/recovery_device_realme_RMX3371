@@ -65,6 +65,81 @@ class HelperTests(unittest.TestCase):
         for slot in "ab":
             self.assertEqual(os.readlink(self.blocks / f"reserve_{slot}"), str(image))
 
+    def test_unset_crypto_state_means_unencrypted_unless_fbe_key_exists(self):
+        # TWRP never sets ro.crypto.state=unencrypted; after Format Data it's unset.
+        self.mounted()
+        key = self.data / "unencrypted/key"
+        key.mkdir(parents=True)
+        (key / "version").write_text("1\n")
+        self.assertEqual(self.reserve(state="").returncode, 0)
+        self.assertFalse((self.data / "reserve").exists())
+        self.assertEqual(list(self.blocks.iterdir()), [])
+        (key / "version").unlink()
+        self.assertEqual(self.reserve(state="").returncode, 0)
+        image = self.data / "reserve/reserve.img"
+        self.assertTrue(image.is_file())
+        for slot in "ab":
+            self.assertEqual(os.readlink(self.blocks / f"reserve_{slot}"), str(image))
+
+    def test_transient_failure_is_retryable(self):
+        # A failed write (here: unwritable link directory) returns 1 so the
+        # loop retries, unlike an unexpected file or link, which returns 2.
+        if os.geteuid() == 0:
+            self.skipTest("root ignores directory permissions")
+        self.mounted()
+        self.blocks.chmod(0o500)
+        self.addCleanup(self.blocks.chmod, 0o700)
+        self.assertEqual(self.reserve().returncode, 1)
+        self.blocks.chmod(0o700)
+        self.assertEqual(self.reserve().returncode, 0)
+        self.assertTrue((self.blocks / "reserve_a").is_symlink())
+
+    def run_loop(self, prelude):
+        """Run the whole helper, loop included, for a few iterations."""
+        script = (SCRIPTS / "make-fake-partitions-service.sh").read_text()
+        log = self.root / "recovery.log"
+        log.write_text("")
+        for before, after in {
+            "/proc/mounts": str(self.mounts),
+            "/dev/block/by-name": str(self.blocks),
+            "/tmp/recovery.log": str(log),
+            "/data": str(self.data),
+        }.items():
+            script = script.replace(before, after)
+        counter = self.root / "iterations"
+        stubs = (
+            'stat() { if [ "$3" = / ]; then echo 1; else echo 2; fi; }\n'
+            'getprop() { case "$1" in ro.crypto.state) echo unencrypted;; esac; }\n'
+            # Stop after five iterations instead of looping forever.
+            'sleep() { n=$(cat %s 2>/dev/null || echo 0); echo $((n + 1)) > %s; [ "$n" -lt 5 ] || exit 0; }\n'
+            % (shlex.quote(str(counter)), shlex.quote(str(counter)))
+        )
+        result = subprocess.run(["sh", "-c", stubs + prelude + script, "sh", "reserve"],
+                                env=self.env, capture_output=True)
+        return result, log.read_text()
+
+    def test_loop_retries_transient_failures_and_logs_once(self):
+        self.mounted()
+        calls = self.root / "ln-calls"
+        # The first two ln calls fail, as if /dev or /data was briefly unavailable.
+        prelude = ('ln() { c=$(cat %s 2>/dev/null || echo 0); echo $((c + 1)) > %s; '
+                   '[ "$c" -ge 2 ] || return 1; command ln "$@"; }\n'
+                   % (shlex.quote(str(calls)), shlex.quote(str(calls))))
+        result, log = self.run_loop(prelude)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(log.count("failed for reserve; retrying"), 1)
+        self.assertNotIn("stopping", log)
+        for slot in "ab":
+            self.assertTrue((self.blocks / f"reserve_{slot}").is_symlink())
+
+    def test_loop_stops_on_unexpected_node(self):
+        self.mounted()
+        (self.blocks / "reserve_a").write_bytes(b"real partition placeholder")
+        result, log = self.run_loop("")
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(log.count("stopping"), 1)
+        self.assertEqual((self.blocks / "reserve_a").read_bytes(), b"real partition placeholder")
+
     def test_ramdisk_filesystem_is_rejected(self):
         self.mounted()
         self.assertEqual(self.reserve(root_device=True).returncode, 0)
@@ -74,7 +149,7 @@ class HelperTests(unittest.TestCase):
         self.mounted()
         node = self.blocks / "reserve_a"
         node.write_bytes(b"real partition placeholder")
-        self.assertNotEqual(self.reserve().returncode, 0)
+        self.assertEqual(self.reserve().returncode, 2)
         self.assertFalse(node.is_symlink())
         self.assertEqual(node.read_bytes(), b"real partition placeholder")
         target = self.root / "elsewhere"
@@ -83,7 +158,7 @@ class HelperTests(unittest.TestCase):
         (self.data / "reserve/reserve.img").unlink()
         (self.data / "reserve").rmdir()
         (self.data / "reserve").symlink_to(target, target_is_directory=True)
-        self.assertNotEqual(self.reserve().returncode, 0)
+        self.assertEqual(self.reserve().returncode, 2)
         self.assertEqual(list(target.iterdir()), [])
 
     def test_invalid_partition_name_is_rejected_before_loop(self):
@@ -134,7 +209,9 @@ class HelperTests(unittest.TestCase):
             self.assertIn("skipped", (bundle / "status.txt").read_text())
             self.assertIn("current-slot.txt: exit 2", (bundle / "status.txt").read_text())
             self.assertNotIn("ro.serialno", (bundle / "device.txt").read_text())
-            self.assertEqual(bundle.stat().st_mode & 0o777, 0o700)
+            # Owner/group only, so Android's media_rw can open and delete it.
+            self.assertEqual(bundle.stat().st_mode & 0o777, 0o770)
+            self.assertEqual((bundle / "status.txt").stat().st_mode & 0o777, 0o660)
         result = subprocess.run(["sh", str(runner), str(dest / "missing")], env=self.env, capture_output=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse((dest / "missing").exists())

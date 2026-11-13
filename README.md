@@ -120,12 +120,18 @@ have a 15-second timeout; missing tools and nonzero exits are recorded in
 `status.txt`. No partitions are mounted by the collector and nothing is uploaded.
 Logs can still contain personal information; inspect them before sharing.
 This preserves available crash logs, not logs already overwritten by recovery.
+The bundle is given the storage folder's owner with owner/group-only access,
+so Android (media_rw) can open and delete it on internal storage.
 
 The stock-OTA reserve helper now waits for an ext4/f2fs read-write userdata
-mount and, when encrypted, successful TWRP decryption. It preserves existing
-images, refuses conflicting nodes/symlinks, and creates aliases only alongside
-`misc` under `/dev/block/by-name`. It no longer adds them explicitly under
-`/dev/block/bootdevice/by-name` or requires a world-writable script.
+mount and, when encrypted, successful TWRP decryption. TWRP never sets
+`ro.crypto.state=unencrypted`, so an unset value counts as unencrypted (e.g.
+right after Format Data) unless `/data/unencrypted/key/version` exists. It
+preserves existing images, refuses conflicting nodes/symlinks, and creates
+aliases only alongside `misc` under `/dev/block/by-name`. It no longer adds
+them explicitly under `/dev/block/bootdevice/by-name` or requires a
+world-writable script. Failed writes are retried every 2 seconds and logged
+once; it only stops when an unexpected file or link is in the way.
 
 High-speed flashing now requires readable Android OTA text metadata declaring
 `ota-type=AB` and a `pre-device` matching this board's
