@@ -109,6 +109,47 @@ do, and still reads the 48-byte ones stock realme UI creates. If you replace
 the kernel, run the script on the new `Image`; it refuses to touch a kernel
 it doesn't recognize.
 
+## Experimental recovery improvements
+
+With the matching recovery-source changes, Advanced -> Copy Log offers
+**Include Device Diagnostics**. It creates a unique `twrp-diagnostics-*`
+directory on the selected storage containing recovery/kernel/logcat logs,
+Super metadata for both slots, read-only bootctl queries, mounts, block links,
+selected properties, and any existing pstore/last_kmsg files. Optional commands
+have a 15-second timeout; missing tools and nonzero exits are recorded in
+`status.txt`. No partitions are mounted by the collector and nothing is uploaded.
+Logs can still contain personal information; inspect them before sharing.
+This preserves available crash logs, not logs already overwritten by recovery.
+
+The stock-OTA reserve helper now waits for an ext4/f2fs read-write userdata
+mount and, when encrypted, successful TWRP decryption. It preserves existing
+images, refuses conflicting nodes/symlinks, and creates aliases only alongside
+`misc` under `/dev/block/by-name`. It no longer adds them explicitly under
+`/dev/block/bootdevice/by-name` or requires a world-writable script.
+
+High-speed flashing now requires readable Android OTA text metadata declaring
+`ota-type=AB` and a `pre-device` matching this board's
+`TARGET_OTA_ASSERT_DEVICE` aliases. Missing, oversized, duplicate, or mismatched
+device metadata stops this path before payload writes; it does not fall back
+to the normal installer. This checks package compatibility, not authenticity;
+the existing ZIP signature-verification setting remains separate.
+
+Host checks:
+
+```bash
+python3 device/realme/RMX3371/tools/test_recovery_helpers.py
+c++ -std=c++17 -Wall -Wextra -Werror \
+  -I bootable/recovery/twrpinstall/include \
+  bootable/recovery/tests/ota_device_check_test.cpp -o /tmp/ota-device-test
+/tmp/ota-device-test
+```
+
+These changes need a full recovery build and device validation. In particular,
+test stock/custom OTA installation, decryption with and without a PIN, Format
+Data followed by another install, slot switching, and diagnostic export to
+internal storage and USB OTG. Host fixtures do not exercise real mount races,
+Android init, the boot HAL, or the actual recovery command versions.
+
 ---
 ## Copyright notice
  ```

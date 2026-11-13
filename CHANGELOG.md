@@ -3,6 +3,9 @@
 TWRP for the realme GT Neo 3T (RMX3371).
 
 ## Unreleased
+- Experimental: device-metadata checks for high-speed flashing (matching recovery source required)
+- Experimental: optional device diagnostic export from Copy Log, including existing pstore logs
+- Reserve helper waits for mounted/decrypted userdata, preserves existing images and conflicting nodes, and avoids adding bootdevice slot aliases
 - No more gray band at the top: the UI uses the full screen and the CPU temperature moved clear of the punch-hole camera
 - CPU temperature now reads the CPU sensor (cpuss-0) instead of aoss0
 - VBMeta System and VBMeta Vendor can be flashed and backed up (Install → Image, Backup)
