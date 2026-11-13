@@ -54,5 +54,11 @@ if ! cp /tmp/recovery.log "$out/recovery.log"; then
     echo "Failed to save recovery.log" >> "$status"
     exit 1
 fi
+# Everything above was created root-only (umask 077). On internal storage
+# Android reaches /data/media as media_rw, so hand the bundle to the
+# destination's owner and open it to that owner and group only; otherwise it
+# could only be opened or deleted from TWRP. FAT/exFAT (USB OTG) ignore this.
+owner=$(stat -c %u:%g "$1" 2>/dev/null) && chown -R "$owner" "$out" 2>/dev/null
+chmod -R u=rwX,g=rwX,o= "$out" 2>/dev/null
 sync
 echo "Diagnostics saved to $out"
