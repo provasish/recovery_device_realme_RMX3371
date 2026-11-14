@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Host fixtures only: no real block devices are opened or written."""
 import contextlib
+import fcntl
 import importlib.util
 import io
 import os
@@ -60,7 +61,7 @@ class InstallerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             packager.validate_image(b"ANDROID!")
 
-    def run_installer(self, slot="_a", device="RMX3371", fail="", missing=False, bad_hash=False, alias=False):
+    def run_installer(self, slot="_a", device="RMX3371", fail="", missing=False, bad_hash=False, alias=False, high_fd=False, closed_fd=False):
         bins = self.root / "bin"
         bins.mkdir()
         blocks = self.root / "blocks"
@@ -99,8 +100,31 @@ fi''',
         runner.write_text(script)
         env = dict(os.environ, PATH=str(bins) + ":" + os.environ["PATH"], SLOT=slot,
                    DEVICE=device, FAIL=fail, WRITES=str(log), ALIAS="yes" if alias else "no")
-        result = subprocess.run(["/bin/sh", str(runner), "3", "1", str(self.zip)],
-                                env=env, capture_output=True, text=True, timeout=10)
+        if high_fd:
+            read_fd, write_fd = os.pipe()
+            # TWRP has many open files. Pass a genuine high-numbered UI pipe,
+            # independently of stdout/stderr, just as Run_Update_Binary does.
+            ui_fd = fcntl.fcntl(write_fd, fcntl.F_DUPFD, 64)
+            os.close(write_fd)
+            try:
+                result = subprocess.run(["/bin/sh", str(runner), "3", str(ui_fd), str(self.zip)],
+                                        env=env, pass_fds=(ui_fd,), capture_output=True,
+                                        text=True, timeout=10)
+                os.close(ui_fd)
+                ui_fd = None
+                with os.fdopen(read_fd) as pipe:
+                    messages = pipe.read()
+                read_fd = None
+            finally:
+                if ui_fd is not None:
+                    os.close(ui_fd)
+                if read_fd is not None:
+                    os.close(read_fd)
+            self.assertNotIn("ui_print", result.stdout, "UI must use its pipe, not stdout")
+            result.stdout = messages
+        else:
+            result = subprocess.run(["/bin/sh", str(runner), "3", "64" if closed_fd else "1", str(self.zip)],
+                                    env=env, capture_output=True, text=True, timeout=10)
         writes = log.read_text().splitlines() if log.exists() else []
         self.assertFalse(list(self.root.glob("work.*")), "temporary extraction must be removed")
         return result, writes, blocks
@@ -126,6 +150,18 @@ fi''',
         self.assertIn("Recovery booted from slot: B", result.stdout)
         self.assertLess(result.stdout.index("Flashing recovery on slot A"),
                         result.stdout.index("Flashing recovery on slot B"))
+
+    def test_high_numbered_twrp_ui_pipe(self):
+        result, writes, _ = self.run_installer(high_fd=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(len(writes), 2)
+        self.assertIn("ui_print Device: realme GT Neo 3T (RMX3371)", result.stdout)
+        self.assertIn("ui_print Slot B: SHA-256 verification PASSED", result.stdout)
+        self.assertIn("ui_print Slot A: SHA-256 verification PASSED", result.stdout)
+        self.assertIn("ui_print Both recovery partitions verified. Installation complete.", result.stdout)
+
+    def test_unavailable_ui_pipe_prevents_writes(self):
+        self.assert_no_writes(closed_fd=True)
 
     def assert_no_writes(self, **kwargs):
         result, writes, blocks = self.run_installer(**kwargs)
