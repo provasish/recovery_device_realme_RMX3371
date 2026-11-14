@@ -110,6 +110,12 @@ fi''',
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("recovery_b", writes[0])
         self.assertIn("recovery_a", writes[1])
+        self.assertIn("Device: realme GT Neo 3T (RMX3371)", result.stdout)
+        self.assertIn("Recovery booted from slot: A", result.stdout)
+        self.assertIn("Slot B: SHA-256 verification PASSED", result.stdout)
+        self.assertIn("Slot A: SHA-256 verification PASSED", result.stdout)
+        self.assertLess(result.stdout.index("Flashing recovery on slot B"),
+                        result.stdout.index("Flashing recovery on slot A"))
         for path in blocks.iterdir():
             self.assertEqual(path.read_bytes(), image_bytes())
 
@@ -117,6 +123,9 @@ fi''',
         result, writes, _ = self.run_installer(slot="_b")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("recovery_a", writes[0])
+        self.assertIn("Recovery booted from slot: B", result.stdout)
+        self.assertLess(result.stdout.index("Flashing recovery on slot A"),
+                        result.stdout.index("Flashing recovery on slot B"))
 
     def assert_no_writes(self, **kwargs):
         result, writes, blocks = self.run_installer(**kwargs)
