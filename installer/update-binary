@@ -1,0 +1,62 @@
+#!/system/bin/sh
+# TWRP update-binary protocol: API version, UI pipe fd, ZIP filename.
+# This template is filled with the built image's size and SHA-256 by the packager.
+OUTFD=$2
+ZIPFILE=$3
+case "$OUTFD" in ''|*[!0-9]*) exit 1 ;; esac
+ui_print() { echo "ui_print $*" >&$OUTFD; echo ui_print >&$OUTFD; }
+abort() { ui_print "ERROR: $*"; exit 1; }
+umask 077
+WORK=
+trap '[ -z "$WORK" ] || rm -rf "$WORK"' EXIT
+trap 'exit 1' HUP INT TERM
+
+ui_print 'TWRP installer for realme GT Neo 3T (RMX3371)'
+ui_print 'Installs recovery_a and recovery_b; leaves the active slot unchanged.'
+for tool in getprop unzip mktemp wc tr sha256sum blockdev readlink stat dd head sync rm; do
+    command -v "$tool" >/dev/null 2>&1 || abort "Missing recovery tool: $tool"
+done
+matched=false
+for prop in ro.product.device ro.product.vendor.device ro.product.system.device ro.build.product; do
+    case "$(getprop "$prop")" in RMX3371|RE54E4L1|spartan) matched=true ;; esac
+done
+[ "$matched" = true ] || abort 'This ZIP is only for RMX3371/RE54E4L1/spartan.'
+case "$(getprop ro.boot.slot_suffix)" in
+    _a) first=/dev/block/by-name/recovery_b; second=/dev/block/by-name/recovery_a ;;
+    _b) first=/dev/block/by-name/recovery_a; second=/dev/block/by-name/recovery_b ;;
+    *) abort 'Cannot determine the booted slot.' ;;
+esac
+
+IMAGE_SIZE=@IMAGE_SIZE@
+IMAGE_SHA256=@IMAGE_SHA256@
+WORK=$(mktemp -d /tmp/twrp-installer.XXXXXX) || abort 'Cannot create temporary directory.'
+unzip -p "$ZIPFILE" recovery.img > "$WORK/recovery.img" || abort 'Cannot extract recovery.img.'
+[ "$(wc -c < "$WORK/recovery.img" | tr -d '[:space:]')" = "$IMAGE_SIZE" ] || abort 'Image size mismatch.'
+actual=$(sha256sum "$WORK/recovery.img") || abort 'Cannot hash image.'
+[ "${actual%% *}" = "$IMAGE_SHA256" ] || abort 'Image checksum mismatch.'
+
+# Finish all target checks before the first write. Require this board's geometry.
+for target in "$first" "$second"; do
+    [ -b "$target" ] || abort "Missing block device: $target"
+    size=$(blockdev --getsize64 "$target") || abort "Cannot query $target"
+    [ "$size" = 134217728 ] || abort "Unexpected partition size: $target ($size)"
+    [ "$IMAGE_SIZE" -le "$size" ] || abort "Image exceeds $target"
+done
+first_real=$(readlink -f "$first") || abort 'Cannot resolve first recovery partition.'
+second_real=$(readlink -f "$second") || abort 'Cannot resolve second recovery partition.'
+[ -n "$first_real" ] && [ -n "$second_real" ] && [ "$first_real" != "$second_real" ] || abort 'Recovery partitions must be distinct.'
+first_id=$(stat -Lc '%t:%T' "$first") || abort 'Cannot identify first recovery partition.'
+second_id=$(stat -Lc '%t:%T' "$second") || abort 'Cannot identify second recovery partition.'
+[ "$first_id" != "$second_id" ] || abort 'Recovery block devices must be distinct.'
+
+for target in "$first" "$second"; do
+    ui_print "Writing ${target##*/}..."
+    dd if="$WORK/recovery.img" of="$target" bs=4194304 || abort "Write failed: $target. Do not reboot; reflash recovery."
+    sync || abort 'Cannot sync recovery writes.'
+    ui_print "Verifying ${target##*/}..."
+    # Hash only the image bytes, excluding unused bytes at the end of the partition.
+    actual=$(head -c "$IMAGE_SIZE" "$target" | sha256sum) || abort "Cannot verify $target"
+    [ "${actual%% *}" = "$IMAGE_SHA256" ] || abort "Verification failed: $target. Do not reboot; reflash recovery."
+done
+ui_print 'Both recovery partitions verified. Installation complete.'
+exit 0
