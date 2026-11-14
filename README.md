@@ -59,6 +59,48 @@ lunch twrp_RMX3371-eng
 mka recoveryimage
 ```
 
+This also generates `out/target/product/RMX3371/twrp-installer-RMX3371.zip`
+alongside `recovery.img`. The ZIP is rebuilt whenever the image or installer
+sources change; `mka recoveryzip` is also available. Packaging requires host
+`python3` and uses only its standard library. To package an existing image:
+
+```bash
+python3 device/realme/RMX3371/tools/build_recovery_installer.py \
+  --image out/target/product/RMX3371/recovery.img \
+  --output out/target/product/RMX3371/twrp-installer-RMX3371.zip
+```
+
+In an already working TWRP, use **Install** to flash the installer ZIP with
+**High-speed flash off** (this is a recovery installer, not a payload ROM).
+The ZIP is **unsigned**, so ZIP signature verification must be off; its embedded
+SHA-256 detects damaged image contents but does not authenticate the publisher.
+Keep a trusted copy of `recovery.img` on your PC for initial installation or
+recovery through fastboot. This installer is intended for TWRP-compatible
+recoveries, not stock recovery or Android's local-update screen.
+
+The installer accepts the exact device aliases `RMX3371`, `RE54E4L1` and
+`spartan`, checks the embedded image checksum, and validates **both** dedicated
+128 MiB recovery block devices before writing. It writes the slot opposite
+`ro.boot.slot_suffix` first, syncs, and checks the SHA-256 of the written image
+bytes before proceeding to the booted slot. It never switches slots, repacks
+boot, modifies vbmeta, or formats userdata. Installing both slots replaces any
+other recovery previously installed on either slot. If a write or read-back
+check fails, stop and reflash a known-good recovery through fastboot before
+rebooting; the operation cannot roll back a partially written partition.
+
+Host fixtures (ordinary temporary files, never real block devices):
+
+```bash
+python3 device/realme/RMX3371/tools/test_recovery_installer.py
+```
+
+The fixtures cover ZIP reproducibility, image header/size validation, build-rule
+dependencies, device/slot checks, both-partition preflight, write order, corrupt
+image rejection, write errors, and read-back errors. A full Android/Kati build
+and real-device flashing still need validation. On the first device test,
+confirm both recovery slots boot afterward and the bootloader active slot did
+not change.
+
 The phone has `recovery_a` and `recovery_b`; flash both:
 
 ```bash
