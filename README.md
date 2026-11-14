@@ -96,7 +96,9 @@ python3 device/realme/RMX3371/tools/test_recovery_installer.py
 
 The fixtures cover ZIP reproducibility, image header/size validation, build-rule
 dependencies, device/slot checks, both-partition preflight, write order, corrupt
-image rejection, write errors, and read-back errors. A full Android/Kati build
+image rejection, write errors, read-back errors, and TWRP UI pipes with high
+descriptor numbers. The installer refuses to flash if its UI pipe is unavailable.
+A full Android/Kati build
 and real-device flashing still need validation. On the first device test,
 confirm both recovery slots boot afterward and the bootloader active slot did
 not change.

@@ -4,7 +4,17 @@
 OUTFD=$2
 ZIPFILE=$3
 case "$OUTFD" in ''|*[!0-9]*) exit 1 ;; esac
-ui_print() { echo "ui_print $*" >&$OUTFD; echo ui_print >&$OUTFD; }
+# Android mksh reserves high descriptors for shell internals; >&$OUTFD can
+# reject the high-numbered pipe supplied by TWRP. Reopen it onto a low fd.
+# Refuse to flash if UI delivery cannot be established.
+[ -p "/proc/self/fd/$OUTFD" ] || { echo 'ERROR: TWRP UI pipe is unavailable.' >&2; exit 1; }
+exec 3>"/proc/self/fd/$OUTFD" || exit 1
+ui_print() {
+    printf 'ui_print %s\nui_print\n' "$*" >&3 || {
+        echo 'ERROR: Cannot write to TWRP UI pipe.' >&2
+        exit 1
+    }
+}
 abort() { ui_print "ERROR: $*"; exit 1; }
 umask 077
 WORK=
