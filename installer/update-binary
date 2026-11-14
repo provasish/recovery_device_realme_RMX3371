@@ -18,22 +18,29 @@ for tool in getprop unzip mktemp wc tr sha256sum blockdev readlink stat dd head 
 done
 matched=false
 for prop in ro.product.device ro.product.vendor.device ro.product.system.device ro.build.product; do
-    case "$(getprop "$prop")" in RMX3371|RE54E4L1|spartan) matched=true ;; esac
+    device=$(getprop "$prop")
+    case "$device" in RMX3371|RE54E4L1|spartan) matched=true; break ;; esac
 done
 [ "$matched" = true ] || abort 'This ZIP is only for RMX3371/RE54E4L1/spartan.'
+ui_print "Device: realme GT Neo 3T ($device)"
 case "$(getprop ro.boot.slot_suffix)" in
-    _a) first=/dev/block/by-name/recovery_b; second=/dev/block/by-name/recovery_a ;;
-    _b) first=/dev/block/by-name/recovery_a; second=/dev/block/by-name/recovery_b ;;
+    _a) booted_slot=A; first=/dev/block/by-name/recovery_b; second=/dev/block/by-name/recovery_a ;;
+    _b) booted_slot=B; first=/dev/block/by-name/recovery_a; second=/dev/block/by-name/recovery_b ;;
     *) abort 'Cannot determine the booted slot.' ;;
 esac
+ui_print "Recovery booted from slot: $booted_slot"
+ui_print 'Target: recovery on BOTH slots (inactive slot first)'
 
 IMAGE_SIZE=@IMAGE_SIZE@
 IMAGE_SHA256=@IMAGE_SHA256@
 WORK=$(mktemp -d /tmp/twrp-installer.XXXXXX) || abort 'Cannot create temporary directory.'
+ui_print 'Extracting recovery image...'
 unzip -p "$ZIPFILE" recovery.img > "$WORK/recovery.img" || abort 'Cannot extract recovery.img.'
 [ "$(wc -c < "$WORK/recovery.img" | tr -d '[:space:]')" = "$IMAGE_SIZE" ] || abort 'Image size mismatch.'
 actual=$(sha256sum "$WORK/recovery.img") || abort 'Cannot hash image.'
 [ "${actual%% *}" = "$IMAGE_SHA256" ] || abort 'Image checksum mismatch.'
+ui_print "Image checksum: OK ($IMAGE_SIZE bytes)"
+ui_print 'Checking both recovery partitions...'
 
 # Finish all target checks before the first write. Require this board's geometry.
 for target in "$first" "$second"; do
@@ -50,13 +57,16 @@ second_id=$(stat -Lc '%t:%T' "$second") || abort 'Cannot identify second recover
 [ "$first_id" != "$second_id" ] || abort 'Recovery block devices must be distinct.'
 
 for target in "$first" "$second"; do
-    ui_print "Writing ${target##*/}..."
+    case "${target##*/}" in recovery_a) slot=A ;; recovery_b) slot=B ;; esac
+    ui_print "Flashing recovery on slot $slot (${target##*/})..."
     dd if="$WORK/recovery.img" of="$target" bs=4194304 || abort "Write failed: $target. Do not reboot; reflash recovery."
     sync || abort 'Cannot sync recovery writes.'
-    ui_print "Verifying ${target##*/}..."
+    ui_print "Verifying recovery on slot $slot..."
     # Hash only the image bytes, excluding unused bytes at the end of the partition.
     actual=$(head -c "$IMAGE_SIZE" "$target" | sha256sum) || abort "Cannot verify $target"
     [ "${actual%% *}" = "$IMAGE_SHA256" ] || abort "Verification failed: $target. Do not reboot; reflash recovery."
+    ui_print "Slot $slot: SHA-256 verification PASSED"
 done
 ui_print 'Both recovery partitions verified. Installation complete.'
+ui_print 'Active slot unchanged.'
 exit 0
