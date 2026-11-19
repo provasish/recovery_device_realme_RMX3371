@@ -3,6 +3,11 @@
 TWRP for the realme GT Neo 3T (RMX3371).
 
 ## Unreleased
+- Zip signature verification now uses this device's real OPPO/Realme OTA keys (`local_OTA` and `special_OTA`); the misspelled, duplicate `sepcialkeys.zip` is gone
+- Fixed an orphan `*/` in `ueventd.qcom.rc` that ueventd could not parse
+- `qseecomd` is executable again, so Qualcomm FBE decryption can start it
+- Fixed the MTP `idProduct` hex case in `init.recovery.usb.rc`
+- Added `.gitattributes` (LF for scripts/config, binary for blobs) and `.gitignore` for Python bytecode
 - Experimental: device-metadata checks for high-speed flashing (matching recovery source required)
 - Experimental: optional device diagnostic export from Copy Log, including existing pstore logs
 - Reserve helper waits for mounted/decrypted userdata, preserves existing images and conflicting nodes, and avoids adding bootdevice slot aliases

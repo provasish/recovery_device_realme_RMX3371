@@ -92,9 +92,13 @@ Host fixtures (ordinary temporary files, never real block devices):
 
 ```bash
 python3 device/realme/RMX3371/tools/test_recovery_installer.py
+python3 device/realme/RMX3371/tools/test_recovery_helpers.py
+python3 device/realme/RMX3371/tools/test_security_certs.py
 ```
 
-The fixtures cover ZIP reproducibility, image header/size validation, build-rule
+The certificate test checks that the recovery keyring contains both valid,
+distinct OPPO/Realme OTA certificates and no longer the old OnePlus placeholder.
+The other fixtures cover ZIP reproducibility, image header/size validation, build-rule
 dependencies, device/slot checks, both-partition preflight, write order, corrupt
 image rejection, write errors, read-back errors, and TWRP UI pipes with high
 descriptor numbers. The installer refuses to flash if its UI pipe is unavailable.
