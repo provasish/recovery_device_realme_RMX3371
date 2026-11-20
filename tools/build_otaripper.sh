@@ -22,8 +22,31 @@ WORK="${WORK:-$HOME/otabuild}"
 mkdir -p "$WORK"
 cd "$WORK"
 
+die() {
+  echo "$*" >&2
+  exit 1
+}
+
+# Compare a downloaded file with a checksum taken from the publisher.
+verify_sha256() {
+  file="$1"
+  expected="$2"
+  [ -n "$expected" ] || die "No published checksum for $file"
+  actual=$(sha256sum "$file" | cut -d' ' -f1)
+  [ "$actual" = "$expected" ] || die "Checksum mismatch for $file: expected $expected, got $actual"
+}
+
+# Host Rust is installed from the pinned rustup-init binary, verified against
+# the checksum rustup publishes next to it. Older versions piped sh.rustup.rs
+# straight into a shell.
 if [ ! -x "$HOME/.cargo/bin/rustup" ]; then
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+  RUSTUP_DIST="https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu"
+  curl --proto '=https' --tlsv1.2 -sSf "$RUSTUP_DIST/rustup-init" -o rustup-init
+  curl --proto '=https' --tlsv1.2 -sSf "$RUSTUP_DIST/rustup-init.sha256" -o rustup-init.sha256
+  verify_sha256 rustup-init "$(cut -d' ' -f1 rustup-init.sha256)"
+  chmod +x rustup-init
+  ./rustup-init -y --profile minimal --no-modify-path
+  rm -f rustup-init rustup-init.sha256
 fi
 # shellcheck disable=SC1091
 . "$HOME/.cargo/env"
@@ -31,7 +54,18 @@ rustup toolchain install stable --profile minimal
 rustup target add --toolchain stable aarch64-unknown-linux-musl
 
 if [ ! -x "$WORK/zig-linux-x86_64-$ZIG_VER/zig" ]; then
+  # Zig publishes the tarball checksum only inside index.json.
+  zig_sha=$(curl -sSfL https://ziglang.org/download/index.json | awk -v ver="$ZIG_VER" '
+    index($0, "\"" ver "\": {") { in_ver = 1; next }
+    in_ver && /"x86_64-linux": \{/ { in_arch = 1; next }
+    in_ver && in_arch && /"shasum":/ {
+      match($0, /"[0-9a-f]{64}"/)
+      print substr($0, RSTART + 1, RLENGTH - 2)
+      exit
+    }')
+  [ -n "$zig_sha" ] || die "Could not read the published Zig $ZIG_VER checksum"
   curl -sSfL "https://ziglang.org/download/$ZIG_VER/zig-linux-x86_64-$ZIG_VER.tar.xz" -o zig.tar.xz
+  verify_sha256 zig.tar.xz "$zig_sha"
   tar -xf zig.tar.xz
   rm zig.tar.xz
 fi
@@ -45,6 +79,8 @@ fi
 cd otaripper
 git fetch --quiet origin
 git checkout --quiet "$OTARIPPER_COMMIT"
+# The full commit id above is the pin; refuse a tree that does not match it.
+[ "$(git rev-parse HEAD)" = "$OTARIPPER_COMMIT" ] || die "otaripper is not at $OTARIPPER_COMMIT"
 git log --oneline -1
 
 MODE=musl CPU=v82 LTO=fat FEATURES=lite bash ./build.sh

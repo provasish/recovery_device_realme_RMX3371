@@ -208,6 +208,8 @@ class HelperTests(unittest.TestCase):
             self.assertEqual((bundle / "pstore/console-ramoops-0").read_text(), "fixture crash\n")
             self.assertIn("skipped", (bundle / "status.txt").read_text())
             self.assertIn("current-slot.txt: exit 2", (bundle / "status.txt").read_text())
+            # A missing QSEECom daemon is called out, not left to the log.
+            self.assertIn("qseecomd:", (bundle / "status.txt").read_text())
             self.assertNotIn("ro.serialno", (bundle / "device.txt").read_text())
             # Owner/group only, so Android's media_rw can open and delete it.
             self.assertEqual(bundle.stat().st_mode & 0o777, 0o770)

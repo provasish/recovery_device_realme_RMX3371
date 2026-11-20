@@ -147,8 +147,11 @@ RMX3371_14.0.0.2100 installs in about 70 s instead of about 320 s.
 
 Full OTA zips only. An unreviewed high-speed install that can't take a zip
 falls back to the normal installer before writing anything; a **reviewed**
-install cannot fall back, so turn the toggle off and install again. To rebuild
-otaripper from source run `tools/build_otaripper.sh` on an x86_64 Linux host.
+install cannot fall back, so turn the toggle off and install again. A failure
+before any image is written puts the previous Super layout back. To rebuild
+otaripper from source run `tools/build_otaripper.sh` on an x86_64 Linux host;
+it verifies the rustup installer and Zig tarball against their published
+SHA-256 checksums and pins otaripper to a full commit id.
 
 Tested on device (RMX3371): stock realme UI 14.0.0.2100 with and without
 firmware (73 s, all 22 firmware images verified), and an AOSP ROM (52 s).
@@ -172,7 +175,9 @@ directory on the selected storage containing recovery/kernel/logcat logs,
 Super metadata for both slots, read-only bootctl queries, mounts, block links,
 selected properties, and any existing pstore/last_kmsg files. Optional commands
 have a 15-second timeout; missing tools and nonzero exits are recorded in
-`status.txt`. No partitions are mounted by the collector and nothing is uploaded.
+`status.txt`. `status.txt` also reports whether `qseecomd` is running, since
+FBE decryption fails without it. No partitions are mounted by the collector and
+nothing is uploaded.
 Logs can still contain personal information; inspect them before sharing.
 This preserves available crash logs, not logs already overwritten by recovery.
 The bundle is given the storage folder's owner with owner/group-only access,

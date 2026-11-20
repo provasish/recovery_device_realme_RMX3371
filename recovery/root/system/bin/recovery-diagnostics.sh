@@ -28,12 +28,25 @@ collect super-slot-b.txt lpdump --slot=1
 collect current-slot.txt bootctl get-current-slot
 collect snapshot-merge.txt bootctl get-snapshot-merge-status
 
+# FBE decryption needs the QSEECom daemon. If it never started, every
+# encrypted /data mount fails with no clue in the log, so say it here.
+if [ ! -e /system/bin/qseecomd ]; then
+    printf 'qseecomd: missing from this recovery image\n' >> "$status"
+elif ! command -v pidof >/dev/null 2>&1; then
+    printf 'qseecomd: running state unknown (pidof unavailable)\n' >> "$status"
+elif pidof qseecomd >/dev/null 2>&1; then
+    printf 'qseecomd: running\n' >> "$status"
+else
+    printf 'qseecomd: NOT running (FBE keys unavailable; encrypted /data will not decrypt)\n' >> "$status"
+fi
+
 {
     date -u
     uname -a
     # Deliberately omit serial numbers and a full property dump.
     for key in ro.product.device ro.product.model ro.boot.slot_suffix ro.boot.slot \
                ro.boot.bootreason ro.crypto.state ro.crypto.type twrp.decrypt.done \
+               init.svc.qseecomd \
                ro.virtual_ab.enabled ro.virtual_ab.compression.enabled; do
         printf '%s=%s\n' "$key" "$(getprop "$key")"
     done
