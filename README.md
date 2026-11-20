@@ -94,7 +94,12 @@ Host fixtures (ordinary temporary files, never real block devices):
 python3 device/realme/RMX3371/tools/test_recovery_installer.py
 python3 device/realme/RMX3371/tools/test_recovery_helpers.py
 python3 device/realme/RMX3371/tools/test_security_certs.py
+python3 device/realme/RMX3371/tools/test_tree_consistency.py
+python3 device/realme/RMX3371/tools/test_kernel_patch.py
 ```
+
+A built installer can be checked offline with
+`python3 device/realme/RMX3371/tools/verify_installer.py --zip <installer.zip>`.
 
 The certificate test checks that the recovery keyring contains both valid,
 distinct OPPO/Realme OTA certificates and no longer the old OnePlus placeholder.
@@ -138,10 +143,12 @@ RMX3371_14.0.0.2100 installs in about 70 s instead of about 320 s.
 | verify images after writing | on | re-read every image from storage and check its SHA-256 |
 | allow overwriting the current slot | off | needed on this phone, see Super above |
 | also flash firmware | off | write modem, xbl, tz, ... too (always verified) |
+| high-speed ADB sideload | off | separate toggle on the ADB Sideload screen; reviewed on-device |
 
-Full OTA zips only. If high-speed flash can't take a zip and nothing has been
-written yet, the install continues the normal way. To rebuild otaripper from
-source run `tools/build_otaripper.sh` on an x86_64 Linux host.
+Full OTA zips only. An unreviewed high-speed install that can't take a zip
+falls back to the normal installer before writing anything; a **reviewed**
+install cannot fall back, so turn the toggle off and install again. To rebuild
+otaripper from source run `tools/build_otaripper.sh` on an x86_64 Linux host.
 
 Tested on device (RMX3371): stock realme UI 14.0.0.2100 with and without
 firmware (73 s, all 22 firmware images verified), and an AOSP ROM (52 s).

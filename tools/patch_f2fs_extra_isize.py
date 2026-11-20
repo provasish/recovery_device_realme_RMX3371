@@ -31,8 +31,14 @@ CTX = bytes.fromhex('88ae4bb9' '89048052' '1f011f72')  # ldr w8,[x20,#0xbac]; mo
 OLD = struct.pack('<I', 0x52800608)  # mov w8, #0x30
 NEW = struct.pack('<I', 0x52800488)  # mov w8, #0x24
 
+if len(sys.argv) != 2:
+    sys.exit('usage: patch_f2fs_extra_isize.py KERNEL_IMAGE')
+
 path = sys.argv[1]
-k = bytearray(open(path, 'rb').read())
+with open(path, 'rb') as image:
+    k = bytearray(image.read())
+if len(k) < OFF + 4:
+    sys.exit('kernel image is too small to contain the patch site')
 if k[OFF - 12:OFF] != CTX:
     sys.exit('unexpected code at %#x: not the kernel this patch was made for' % OFF)
 if k[OFF:OFF + 4] == NEW:

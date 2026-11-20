@@ -14,7 +14,7 @@
 set -euo pipefail
 
 OTARIPPER_REPO="https://github.com/khargosxh18/otaripper"
-OTARIPPER_COMMIT="9a01c8e"
+OTARIPPER_COMMIT="9a01c8ed70f8fc056e18db370dac5dac1bf1fe78"
 ZIG_VER="0.13.0"
 
 TREE="$(cd "$(dirname "$0")/.." && pwd)"

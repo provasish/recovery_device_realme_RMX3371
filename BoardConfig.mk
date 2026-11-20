@@ -169,8 +169,8 @@ TARGET_RECOVERY_QCOM_RTC_FIX := true
 TARGET_RECOVERY_PIXEL_FORMAT := BGRA_8888
 TARGET_USE_CUSTOM_LUN_FILE_PATH := /config/usb_gadget/g1/functions/mass_storage.0/lun.%d/file
 TW_THEME := portrait_hdpi
-# aw8697 motor: keep the stock TWRP durations everywhere else, use short
-# ticks here (fork's TW_HAPTIC_DEFAULT_MS build flag).
+# aw8697 motor: all three haptic durations become 15 ms on this device.
+# Other boards building the same recovery source keep TWRP's 80/40/160 ms.
 TW_HAPTIC_DEFAULT_MS := 15
 TW_BRIGHTNESS_PATH := "/sys/class/backlight/panel0-backlight/brightness"
 TW_MAX_BRIGHTNESS := 2047
