@@ -12,3 +12,7 @@ ro.vendor.qti.va_aosp.support=1
 ro.virtual_ab.enabled=true
 # 120 Hz preferred mode tears at TWRP frame rates; minuitwrp picks 60 Hz.
 ro.twrp.drm.prefer_60hz=true
+# Flashlight (Advanced > Flashlight on/off): the camera HAL drives these.
+ro.twrp.flashlight.leds=led:torch_0,led:torch_1
+ro.twrp.flashlight.switch=led:switch_2
+ro.twrp.flashlight.level=100

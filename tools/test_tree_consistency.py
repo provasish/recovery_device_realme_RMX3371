@@ -94,6 +94,24 @@ class TreeConsistencyTests(unittest.TestCase):
         if drm.is_file():
             self.assertIn("ro.twrp.drm.prefer_60hz", drm.read_text(encoding="utf-8"))
 
+    def test_flashlight_props_are_plain_led_names(self):
+        props = dict(
+            line.strip().split("=", 1)
+            for line in (ROOT / "system.prop").read_text(encoding="utf-8").splitlines()
+            if line.strip().startswith("ro.twrp.flashlight.")
+        )
+        leds = props["ro.twrp.flashlight.leds"].split(",") + [props["ro.twrp.flashlight.switch"]]
+        for name in leds:
+            # GUIAction::flashlight refuses anything but a name under /sys/class/leds
+            self.assertRegex(name, r"^led:[a-z]+_\d+$")
+        self.assertTrue(props["ro.twrp.flashlight.level"].isdigit())
+        self.assertLessEqual(int(props["ro.twrp.flashlight.level"]), 500)  # torch max_brightness
+        action = self.fork_file("gui/action.cpp")
+        if action.is_file():
+            text = action.read_text(encoding="utf-8")
+            for key in props:
+                self.assertIn(key, text)
+
 
 if __name__ == "__main__":
     unittest.main()

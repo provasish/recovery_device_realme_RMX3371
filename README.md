@@ -119,6 +119,13 @@ fastboot flash recovery_a out/target/product/RMX3371/recovery.img
 fastboot flash recovery_b out/target/product/RMX3371/recovery.img
 ```
 
+## Flashlight
+
+Advanced > **Flashlight on/off**. `system.prop` names the LEDs the camera HAL uses:
+`ro.twrp.flashlight.leds=led:torch_0,led:torch_1`, switched by
+`ro.twrp.flashlight.switch=led:switch_2`, at `ro.twrp.flashlight.level=100`
+(max 500).
+
 ## Flashing ROMs
 
 - **Automatically Reflash TWRP after flashing a ROM** is on by default
