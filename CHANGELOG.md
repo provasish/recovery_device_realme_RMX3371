@@ -3,7 +3,7 @@
 TWRP for the realme GT Neo 3T (RMX3371).
 
 ## Unreleased
-- Diagnostics report whether `qseecomd` is running, the daemon FBE decryption depends on
+- Diagnostics report `qseecomd`'s state, the daemon FBE decryption depends on; it is flagged only while encrypted `/data` is still locked, not after a normal decrypt or on unencrypted `/data`
 - `tools/build_otaripper.sh` verifies the rustup installer and Zig tarball against published SHA-256 checksums instead of piping a remote script into a shell
 - Host guards for cross-file drift (partition size, aliases, referenced files) and for the shipped f2fs kernel patch; offline installer ZIP verifier
 - Haptic tuning moved to a device-specific build flag so the shared recovery source keeps stock durations on other boards

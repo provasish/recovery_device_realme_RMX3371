@@ -8,12 +8,16 @@ does not validate Android init, real mount/unmount races, or on-device tools.
 import os
 from pathlib import Path
 import shlex
+import shutil
 import subprocess
 import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "recovery/root/system/bin"
+# Everything recovery-diagnostics.sh runs besides the tools it collects from.
+DIAGNOSTICS_HOST_TOOLS = ("sh", "mktemp", "timeout", "cp", "stat", "chown", "chmod",
+                          "sync", "ls", "date", "uname", "mkdir")
 
 
 class HelperTests(unittest.TestCase):
@@ -177,7 +181,11 @@ class HelperTests(unittest.TestCase):
             executable = bindir / name
             executable.write_text("#!/bin/sh\n" + body)
             executable.chmod(0o755)
-        self.env["PATH"] = str(bindir) + ":/usr/bin:/bin"
+        # Hermetic PATH: a host with Android platform-tools has a real lpdump
+        # in /usr/bin, which would hide the "skipped" path under test.
+        for tool in DIAGNOSTICS_HOST_TOOLS:
+            (bindir / tool).symlink_to(shutil.which(tool, path="/usr/bin:/bin"))
+        self.env["PATH"] = str(bindir)
         recovery = self.root / "recovery.log"
         recovery.write_text("fixture recovery log\n")
         pstore = self.root / "pstore"
@@ -206,10 +214,10 @@ class HelperTests(unittest.TestCase):
         for bundle in bundles:
             self.assertEqual((bundle / "recovery.log").read_bytes(), recovery.read_bytes())
             self.assertEqual((bundle / "pstore/console-ramoops-0").read_text(), "fixture crash\n")
-            self.assertIn("skipped", (bundle / "status.txt").read_text())
+            self.assertIn("super-slot-a.txt: skipped", (bundle / "status.txt").read_text())
             self.assertIn("current-slot.txt: exit 2", (bundle / "status.txt").read_text())
             # A missing QSEECom daemon is called out, not left to the log.
-            self.assertIn("qseecomd:", (bundle / "status.txt").read_text())
+            self.assertIn("qseecomd: missing", (bundle / "status.txt").read_text())
             self.assertNotIn("ro.serialno", (bundle / "device.txt").read_text())
             # Owner/group only, so Android's media_rw can open and delete it.
             self.assertEqual(bundle.stat().st_mode & 0o777, 0o770)
@@ -217,6 +225,64 @@ class HelperTests(unittest.TestCase):
         result = subprocess.run(["sh", str(runner), str(dest / "missing")], env=self.env, capture_output=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse((dest / "missing").exists())
+
+    def test_diagnostics_qseecomd_state_follows_decryption(self):
+        # twrp-common stops qseecomd once every user is decrypted and never
+        # starts it for unencrypted /data; only "encrypted, not decrypted,
+        # not running" is a fault.
+        bindir = self.root / "bin"
+        bindir.mkdir()
+        recovery = self.root / "recovery.log"
+        recovery.write_text("log\n")
+        daemon = self.root / "qseecomd"
+        script = (SCRIPTS / "recovery-diagnostics.sh").read_text()
+        for before, after in {
+            "/tmp/recovery.log": str(recovery),
+            "/proc/mounts": str(self.mounts),
+            "/proc/partitions": str(self.mounts),
+            "/proc/last_kmsg": str(self.root / "missing_last_kmsg"),
+            "/sys/fs/pstore": str(self.root / "missing_pstore"),
+            "/system/bin/qseecomd": str(daemon),
+        }.items():
+            script = script.replace(before, after)
+        runner = self.root / "diagnostics.sh"
+        runner.write_text(script)
+        self.env["PATH"] = str(bindir) + ":/usr/bin:/bin"
+        cases = [
+            # (daemon mode, init.svc.qseecomd, ro.crypto.state, all decrypted, expected)
+            (None, "", "encrypted", "", "qseecomd: missing from this recovery image"),
+            (0o644, "", "encrypted", "", "qseecomd: present but not executable"),
+            (0o755, "running", "encrypted", "", "qseecomd: running\n"),
+            (0o755, "stopped", "encrypted", "true", "qseecomd: stopped; expected: stopped after all users"),
+            (0o755, "", "", "", "qseecomd: not started; not needed (ro.crypto.state=unset)"),
+            (0o755, "stopped", "encrypted", "", "qseecomd: stopped while /data is still encrypted"),
+        ]
+        for index, (mode, service, crypto, decrypted, expected) in enumerate(cases):
+            with self.subTest(expected=expected):
+                if daemon.exists():
+                    daemon.unlink()
+                if mode is not None:
+                    daemon.write_text("#!/bin/sh\n")
+                    daemon.chmod(mode)
+                getprop = bindir / "getprop"
+                getprop.write_text(
+                    "#!/bin/sh\ncase \"$1\" in\n"
+                    f"  init.svc.qseecomd) echo {shlex.quote(service)} ;;\n"
+                    f"  ro.crypto.state) echo {shlex.quote(crypto)} ;;\n"
+                    f"  twrp.all.users.decrypted) echo {shlex.quote(decrypted)} ;;\n"
+                    "esac\n"
+                )
+                getprop.chmod(0o755)
+                dest = self.root / f"out{index}"
+                dest.mkdir()
+                result = subprocess.run(["sh", str(runner), str(dest)], env=self.env, capture_output=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                (bundle,) = dest.iterdir()
+                status = (bundle / "status.txt").read_text()
+                self.assertIn(expected, status)
+                self.assertEqual(status.count("qseecomd:"), 1)
+                if expected != "qseecomd: stopped while /data is still encrypted":
+                    self.assertNotIn("FBE keys are unavailable", status)
 
 
 if __name__ == "__main__":

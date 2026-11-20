@@ -175,8 +175,10 @@ directory on the selected storage containing recovery/kernel/logcat logs,
 Super metadata for both slots, read-only bootctl queries, mounts, block links,
 selected properties, and any existing pstore/last_kmsg files. Optional commands
 have a 15-second timeout; missing tools and nonzero exits are recorded in
-`status.txt`. `status.txt` also reports whether `qseecomd` is running, since
-FBE decryption fails without it. No partitions are mounted by the collector and
+`status.txt`. `status.txt` also reports `qseecomd`'s init state, which FBE
+decryption depends on. It is only flagged as a fault while encrypted `/data`
+is still locked: TWRP stops the daemon once all users are decrypted and never
+starts it for unencrypted `/data`. No partitions are mounted by the collector and
 nothing is uploaded.
 Logs can still contain personal information; inspect them before sharing.
 This preserves available crash logs, not logs already overwritten by recovery.

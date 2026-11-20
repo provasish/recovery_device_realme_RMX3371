@@ -28,17 +28,28 @@ collect super-slot-b.txt lpdump --slot=1
 collect current-slot.txt bootctl get-current-slot
 collect snapshot-merge.txt bootctl get-snapshot-merge-status
 
-# FBE decryption needs the QSEECom daemon. If it never started, every
-# encrypted /data mount fails with no clue in the log, so say it here.
-if [ ! -e /system/bin/qseecomd ]; then
-    printf 'qseecomd: missing from this recovery image\n' >> "$status"
-elif ! command -v pidof >/dev/null 2>&1; then
-    printf 'qseecomd: running state unknown (pidof unavailable)\n' >> "$status"
-elif pidof qseecomd >/dev/null 2>&1; then
-    printf 'qseecomd: running\n' >> "$status"
+# FBE decryption needs the QSEECom daemon. twrp-common's decrypt rc starts it
+# only for encrypted /data (crypto.ready=1) and stops it again once
+# twrp.all.users.decrypted=true, so "not running" is only a fault while
+# encrypted /data is still waiting for its keys. Read init's service state;
+# pidof can't tell "stopped after decryption" from "never started".
+qseecomd_bin=/system/bin/qseecomd
+qseecomd_state=$(getprop init.svc.qseecomd)
+crypto_state=$(getprop ro.crypto.state)
+if [ ! -e "$qseecomd_bin" ]; then
+    qseecomd_note='missing from this recovery image'
+elif [ ! -x "$qseecomd_bin" ]; then
+    qseecomd_note='present but not executable; init cannot start it'
+elif [ "$qseecomd_state" = running ]; then
+    qseecomd_note=running
+elif [ "$(getprop twrp.all.users.decrypted)" = true ]; then
+    qseecomd_note="${qseecomd_state:-not started}; expected: stopped after all users were decrypted"
+elif [ "$crypto_state" != encrypted ]; then
+    qseecomd_note="${qseecomd_state:-not started}; not needed (ro.crypto.state=${crypto_state:-unset})"
 else
-    printf 'qseecomd: NOT running (FBE keys unavailable; encrypted /data will not decrypt)\n' >> "$status"
+    qseecomd_note="${qseecomd_state:-not started} while /data is still encrypted; FBE keys are unavailable"
 fi
+printf 'qseecomd: %s\n' "$qseecomd_note" >> "$status"
 
 {
     date -u
@@ -46,7 +57,7 @@ fi
     # Deliberately omit serial numbers and a full property dump.
     for key in ro.product.device ro.product.model ro.boot.slot_suffix ro.boot.slot \
                ro.boot.bootreason ro.crypto.state ro.crypto.type twrp.decrypt.done \
-               init.svc.qseecomd \
+               twrp.all.users.decrypted init.svc.qseecomd \
                ro.virtual_ab.enabled ro.virtual_ab.compression.enabled; do
         printf '%s=%s\n' "$key" "$(getprop "$key")"
     done
