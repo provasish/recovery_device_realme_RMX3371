@@ -60,13 +60,39 @@ class TreeConsistencyTests(unittest.TestCase):
         ):
             self.assertTrue((ROOT / path).is_file(), f"missing {path}")
 
-    def test_haptic_flag_is_declared_in_the_fork(self):
-        board = board_value("TW_HAPTIC_DEFAULT_MS")
-        self.assertIsNotNone(board, "BoardConfig must set TW_HAPTIC_DEFAULT_MS")
-        self.assertTrue(board.isdigit())
-        mk = Path(__file__).resolve().parents[2] / "bootable" / "recovery" / "Android.mk"
-        if mk.is_file():  # only checkable inside a full AOSP checkout
-            self.assertIn("TW_HAPTIC_DEFAULT_MS", mk.read_text(encoding="utf-8"))
+    # Flags that only exist in the recovery fork; an unknown flag is silently
+    # ignored by the build, so check both sides.
+    FORK_FLAGS = {
+        "TW_HAPTIC_DEFAULT_MS": str.isdigit,
+        "TW_SKIP_FBE_DECRYPTION_SDKVERSION": str.isdigit,
+        "TW_DEFAULT_REFLASH_TWRP": lambda v: v == "true",
+        "TW_REFUSE_ZIPS_AFTER_AB_ROM": lambda v: v == "true",
+        "TW_DEFAULT_TIMEZONE_IST": lambda v: v == "true",
+    }
+
+    def fork_file(self, relative):
+        # tools/ -> RMX3371 -> realme -> device -> AOSP root
+        return Path(__file__).resolve().parents[4] / "bootable" / "recovery" / relative
+
+    def test_fork_flags_are_set_and_declared_in_the_fork(self):
+        mk = self.fork_file("Android.mk")
+        for name, valid in self.FORK_FLAGS.items():
+            with self.subTest(flag=name):
+                board = board_value(name)
+                self.assertIsNotNone(board, f"BoardConfig must set {name}")
+                self.assertTrue(valid(board), f"{name} := {board}")
+                if mk.is_file():  # only checkable inside a full AOSP checkout
+                    self.assertIn(name, mk.read_text(encoding="utf-8"))
+
+    def test_skip_decryption_sdk_is_newer_than_android_12(self):
+        self.assertGreater(int(board_value("TW_SKIP_FBE_DECRYPTION_SDKVERSION")), 32)
+
+    def test_display_prop_reaches_the_fork(self):
+        props = (ROOT / "system.prop").read_text(encoding="utf-8").splitlines()
+        self.assertIn("ro.twrp.drm.prefer_60hz=true", [p.strip() for p in props])
+        drm = self.fork_file("minuitwrp/graphics_drm.cpp")
+        if drm.is_file():
+            self.assertIn("ro.twrp.drm.prefer_60hz", drm.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

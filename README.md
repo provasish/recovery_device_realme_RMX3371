@@ -121,8 +121,15 @@ fastboot flash recovery_b out/target/product/RMX3371/recovery.img
 
 ## Flashing ROMs
 
-- Tick **Automatically Reflash TWRP after flashing a ROM** (A/B ROM zips also
-  replace `recovery` on the slot they write).
+- **Automatically Reflash TWRP after flashing a ROM** is on by default
+  (`TW_DEFAULT_REFLASH_TWRP`): A/B ROM zips also replace `recovery` on the slot
+  they write. The high-speed review says when a ROM ships its own recovery.
+- After an A/B ROM installs, further ZIPs are refused until you reboot to
+  recovery (`TW_REFUSE_ZIPS_AFTER_AB_ROM`); flash Magisk or GApps after that
+  reboot, so they patch the new slot.
+- On Android 17 (SDK 37) and newer ROMs, TWRP doesn't try to decrypt data
+  (`TW_SKIP_FBE_DECRYPTION_SDKVERSION := 37`): its older keystore must not
+  touch a newer ROM's keys. Internal storage is then unavailable in TWRP.
 - Copy the zip to internal storage and use **Install**; it is about three times
   faster than `adb sideload` over this phone's USB 2.0 link.
 - Moving between stock realme UI and a custom ROM needs **Format Data**.

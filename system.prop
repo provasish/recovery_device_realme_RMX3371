@@ -10,3 +10,5 @@ ro.crypto.volume.metadata.method=dm-default-key
 ro.crypto.uses_fs_ioc_add_encryption_key=true
 ro.vendor.qti.va_aosp.support=1
 ro.virtual_ab.enabled=true
+# 120 Hz preferred mode tears at TWRP frame rates; minuitwrp picks 60 Hz.
+ro.twrp.drm.prefer_60hz=true

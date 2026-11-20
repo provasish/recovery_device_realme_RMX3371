@@ -3,6 +3,13 @@
 TWRP for the realme GT Neo 3T (RMX3371).
 
 ## Unreleased
+- FBE decryption is skipped for Android 17 (SDK 37) and newer ROMs, so this TWRP's older keystore never touches their keys
+- "Reflash TWRP after flashing a ROM" is on by default, and the high-speed review warns when a ROM ships its own recovery
+- Further ZIPs are refused after an A/B ROM install until recovery reboots, so they can't patch the old slot
+- Install time is shown on screen; the clock defaults to India Standard Time
+- The display uses 60 Hz instead of 120 Hz, which tore while scrolling (`ro.twrp.drm.prefer_60hz`)
+- Fixed `/data` showing as mounted while only the `/sdcard` bind mount was left (from PitchBlack)
+- The tree-consistency test now finds the recovery fork in an AOSP checkout and checks every fork-only flag
 - Diagnostics report `qseecomd`'s state, the daemon FBE decryption depends on; it is flagged only while encrypted `/data` is still locked, not after a normal decrypt or on unencrypted `/data`
 - `tools/build_otaripper.sh` verifies the rustup installer and Zig tarball against published SHA-256 checksums instead of piping a remote script into a shell
 - Host guards for cross-file drift (partition size, aliases, referenced files) and for the shipped f2fs kernel patch; offline installer ZIP verifier

@@ -172,6 +172,14 @@ TW_THEME := portrait_hdpi
 # aw8697 motor: all three haptic durations become 15 ms on this device.
 # Other boards building the same recovery source keep TWRP's 80/40/160 ms.
 TW_HAPTIC_DEFAULT_MS := 15
+# Leave FBE keys of Android 17 (SDK 37) and newer alone: this TWRP's
+# keymaster/keystore stack is older than theirs. Data stays encrypted there.
+TW_SKIP_FBE_DECRYPTION_SDKVERSION := 37
+# Dedicated recovery_a/b: keep TWRP when a ROM ships its own recovery, and
+# refuse further ZIPs after an A/B ROM until recovery reboots to the new slot.
+TW_DEFAULT_REFLASH_TWRP := true
+TW_REFUSE_ZIPS_AFTER_AB_ROM := true
+TW_DEFAULT_TIMEZONE_IST := true
 TW_BRIGHTNESS_PATH := "/sys/class/backlight/panel0-backlight/brightness"
 TW_MAX_BRIGHTNESS := 2047
 TW_DEFAULT_BRIGHTNESS := 1024
