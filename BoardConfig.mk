@@ -151,7 +151,9 @@ AERA_SKIP_ADDITIONAL_FSTAB := true
 AERA_UI_ADAPTIVE_RESOLUTION := true
 AERA_EXCLUDE_DEFAULT_USB_INIT := true
 AERA_EXCLUDE_APEX := true
-AERA_EXCLUDE_ENCRYPTED_BACKUPS := false
+# Leave unset: AERA builds openaes when this is set to *any* value (even
+# "false"), and openaes uses K&R C that Android 16's clang (C23) rejects.
+# AERA_EXCLUDE_ENCRYPTED_BACKUPS := false
 AERA_INPUT_BLACKLIST := "hbtp_vm"
 AERA_NO_BIND_SYSTEM := true
 AERA_SYSTEM_BUILD_PROP_ADDITIONAL_PATHS := build.prop
