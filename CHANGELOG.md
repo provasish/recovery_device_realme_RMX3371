@@ -3,7 +3,6 @@
 TWRP for the realme GT Neo 3T (RMX3371).
 
 ## Unreleased
-- FBE decryption is skipped for Android 17 (SDK 37) and newer ROMs, so this TWRP's older keystore never touches their keys
 - "Reflash TWRP after flashing a ROM" is on by default, and the high-speed review warns when a ROM ships its own recovery
 - Further ZIPs are refused after an A/B ROM install until recovery reboots, so they can't patch the old slot
 - Install time is shown on screen; the clock defaults to India Standard Time

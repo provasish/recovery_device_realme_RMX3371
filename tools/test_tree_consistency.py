@@ -64,7 +64,6 @@ class TreeConsistencyTests(unittest.TestCase):
     # ignored by the build, so check both sides.
     FORK_FLAGS = {
         "TW_HAPTIC_DEFAULT_MS": str.isdigit,
-        "TW_SKIP_FBE_DECRYPTION_SDKVERSION": str.isdigit,
         "TW_DEFAULT_REFLASH_TWRP": lambda v: v == "true",
         "TW_REFUSE_ZIPS_AFTER_AB_ROM": lambda v: v == "true",
         "TW_DEFAULT_TIMEZONE_IST": lambda v: v == "true",
@@ -83,9 +82,6 @@ class TreeConsistencyTests(unittest.TestCase):
                 self.assertTrue(valid(board), f"{name} := {board}")
                 if mk.is_file():  # only checkable inside a full AOSP checkout
                     self.assertIn(name, mk.read_text(encoding="utf-8"))
-
-    def test_skip_decryption_sdk_is_newer_than_android_12(self):
-        self.assertGreater(int(board_value("TW_SKIP_FBE_DECRYPTION_SDKVERSION")), 32)
 
     def test_display_prop_reaches_the_fork(self):
         props = (ROOT / "system.prop").read_text(encoding="utf-8").splitlines()
